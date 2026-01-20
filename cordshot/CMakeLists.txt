@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(cordshot VERSION 0.1 LANGUAGES CXX)
+project(cordshot VERSION 1.1.0 LANGUAGES CXX)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)

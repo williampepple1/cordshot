@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
     // Set application info
     QApplication::setApplicationName("Cordshot");
     QApplication::setOrganizationName("Cordshot");
-    QApplication::setApplicationVersion("1.0");
+    QApplication::setApplicationVersion("1.1.0");
     
     // Enable high DPI scaling
     QApplication::setHighDpiScaleFactorRoundingPolicy(

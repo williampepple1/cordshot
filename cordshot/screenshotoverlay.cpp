@@ -9,12 +9,14 @@
 #include <QDateTime>
 #include <QClipboard>
 #include <QMessageBox>
+#include <QDir>
 
-ScreenshotOverlay::ScreenshotOverlay(QWidget *parent)
+ScreenshotOverlay::ScreenshotOverlay(const QString &savePath, QWidget *parent)
     : QWidget(parent)
     , m_isSelecting(false)
     , m_hasFirstPoint(false)
     , m_isDragging(false)
+    , m_savePath(savePath)
 {
     setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::Tool);
     setAttribute(Qt::WA_TranslucentBackground, false);
@@ -210,31 +212,49 @@ void ScreenshotOverlay::takeScreenshot()
     // Copy to clipboard
     QGuiApplication::clipboard()->setPixmap(screenshot);
     
-    // Generate default filename
-    QString defaultPath = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
+    // Generate filename with timestamp
     QString timestamp = QDateTime::currentDateTime().toString("yyyy-MM-dd_hh-mm-ss");
-    QString defaultFilename = defaultPath + "/screenshot_" + timestamp + ".png";
+    QString filename;
+    QString savedPath;
     
-    // Hide overlay before showing dialog
+    // Hide overlay before any dialogs
     hide();
     
-    // Ask user where to save
-    QString filename = QFileDialog::getSaveFileName(
-        nullptr,
-        "Save Screenshot",
-        defaultFilename,
-        "PNG Image (*.png);;JPEG Image (*.jpg *.jpeg);;All Files (*.*)"
-    );
-    
-    if (!filename.isEmpty()) {
+    if (!m_savePath.isEmpty() && QDir(m_savePath).exists()) {
+        // Auto-save to configured folder
+        filename = m_savePath + "/screenshot_" + timestamp + ".png";
+        
         if (screenshot.save(filename)) {
-            emit screenshotTaken(screenshot);
+            savedPath = filename;
+            emit screenshotTaken(screenshot, savedPath);
         } else {
-            QMessageBox::warning(nullptr, "Error", "Failed to save screenshot.");
+            QMessageBox::warning(nullptr, "Error", "Failed to save screenshot to:\n" + filename);
+            emit screenshotTaken(screenshot, QString());
         }
     } else {
-        // User cancelled save, but screenshot is still in clipboard
-        emit screenshotTaken(screenshot);
+        // No save path configured, ask user
+        QString defaultPath = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
+        QString defaultFilename = defaultPath + "/screenshot_" + timestamp + ".png";
+        
+        filename = QFileDialog::getSaveFileName(
+            nullptr,
+            "Save Screenshot",
+            defaultFilename,
+            "PNG Image (*.png);;JPEG Image (*.jpg *.jpeg);;All Files (*.*)"
+        );
+        
+        if (!filename.isEmpty()) {
+            if (screenshot.save(filename)) {
+                savedPath = filename;
+                emit screenshotTaken(screenshot, savedPath);
+            } else {
+                QMessageBox::warning(nullptr, "Error", "Failed to save screenshot.");
+                emit screenshotTaken(screenshot, QString());
+            }
+        } else {
+            // User cancelled save, but screenshot is still in clipboard
+            emit screenshotTaken(screenshot, QString());
+        }
     }
     
     close();

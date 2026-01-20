@@ -10,11 +10,11 @@ class ScreenshotOverlay : public QWidget
     Q_OBJECT
 
 public:
-    explicit ScreenshotOverlay(QWidget *parent = nullptr);
+    explicit ScreenshotOverlay(const QString &savePath = QString(), QWidget *parent = nullptr);
     ~ScreenshotOverlay();
 
 signals:
-    void screenshotTaken(const QPixmap &screenshot);
+    void screenshotTaken(const QPixmap &screenshot, const QString &savedPath);
     void cancelled();
 
 protected:
@@ -34,6 +34,7 @@ private:
     bool m_isSelecting;
     bool m_hasFirstPoint;
     bool m_isDragging;
+    QString m_savePath;
 };
 
 #endif // SCREENSHOTOVERLAY_H

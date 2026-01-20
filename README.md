@@ -17,10 +17,9 @@ A lightweight, modern screenshot tool for Windows. Capture any region of your sc
 
 ## 📥 Download
 
-Download the latest release from the [Releases](https://github.com/yourusername/cordshot/releases) page:
+Download the latest release from [Release](https://github.com/williampepple1/cordshot/blob/main/Cordshot-1.1.0-Setup.exe):
 
-- **Cordshot-1.1.0-Setup.exe** - Windows installer (recommended)
-- **Cordshot-v1.1.0-win64.zip** - Portable version
+- **Cordshot-1.1.0-Setup.exe** - Windows installer 
 
 ## 🚀 Quick Start
 

@@ -1,0 +1,4 @@
+// Windows resource file for Cordshot
+// This embeds the icon into the executable
+
+IDI_ICON1 ICON "cordshot.ico"

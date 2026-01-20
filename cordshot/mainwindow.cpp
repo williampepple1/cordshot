@@ -297,19 +297,30 @@ void MainWindow::setupTrayIcon()
 {
     m_trayIcon = new QSystemTrayIcon(this);
     
-    // Create a simple icon (you can replace with actual icon file)
-    QPixmap iconPixmap(32, 32);
-    iconPixmap.fill(Qt::transparent);
-    QPainter painter(&iconPixmap);
-    painter.setRenderHint(QPainter::Antialiasing);
-    painter.setBrush(QColor(102, 126, 234));
-    painter.setPen(Qt::NoPen);
-    painter.drawEllipse(2, 2, 28, 28);
-    painter.setBrush(Qt::white);
-    painter.drawEllipse(10, 10, 12, 12);
-    painter.end();
+    // Use the application icon (embedded in exe on Windows)
+    QIcon appIcon = QIcon(":/icons/cordshot.ico");
+    if (appIcon.isNull()) {
+        // Fallback: try loading from file next to exe
+        appIcon = QIcon(QApplication::applicationDirPath() + "/cordshot.ico");
+    }
+    if (appIcon.isNull()) {
+        // Final fallback: create a simple icon programmatically
+        QPixmap iconPixmap(32, 32);
+        iconPixmap.fill(Qt::transparent);
+        QPainter painter(&iconPixmap);
+        painter.setRenderHint(QPainter::Antialiasing);
+        painter.setBrush(QColor(102, 126, 234));
+        painter.setPen(Qt::NoPen);
+        painter.drawEllipse(2, 2, 28, 28);
+        painter.setBrush(Qt::white);
+        painter.drawEllipse(10, 10, 12, 12);
+        painter.end();
+        appIcon = QIcon(iconPixmap);
+    }
     
-    m_trayIcon->setIcon(QIcon(iconPixmap));
+    // Set app icon for window and tray
+    setWindowIcon(appIcon);
+    m_trayIcon->setIcon(appIcon);
     m_trayIcon->setToolTip("Cordshot - Screenshot Tool");
     
     // Tray menu

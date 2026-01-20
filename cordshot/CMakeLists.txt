@@ -20,6 +20,12 @@ set(PROJECT_SOURCES
         screenshotoverlay.h
 )
 
+# Windows application icon
+if(WIN32)
+    set(APP_ICON_RESOURCE "${CMAKE_CURRENT_SOURCE_DIR}/cordshot.rc")
+    list(APPEND PROJECT_SOURCES ${APP_ICON_RESOURCE})
+endif()
+
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(cordshot
         MANUAL_FINALIZATION

@@ -28,6 +28,20 @@ void ClickableImageLabel::clearPoints()
     update();
 }
 
+int ClickableImageLabel::findPointAt(const QPoint &pos) const
+{
+    const int hitRadius = 12; // Click tolerance in pixels
+    for (int i = m_points.size() - 1; i >= 0; --i) {
+        const QPoint &pt = m_points[i];
+        int dx = pos.x() - pt.x();
+        int dy = pos.y() - pt.y();
+        if (dx * dx + dy * dy <= hitRadius * hitRadius) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 void ClickableImageLabel::mousePressEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton) {
@@ -37,6 +51,14 @@ void ClickableImageLabel::mousePressEvent(QMouseEvent *event)
             pos.y() >= 0 && pos.y() < m_originalPixmap.height()) {
             m_points.append(pos);
             emit pointClicked(pos);
+            update();
+        }
+    } else if (event->button() == Qt::RightButton) {
+        // Check if clicking on an existing point to delete it
+        int index = findPointAt(event->pos());
+        if (index >= 0) {
+            m_points.removeAt(index);
+            emit pointRemoved(index);
             update();
         }
     }
@@ -116,7 +138,7 @@ void CoordinatePicker::setupUI()
     mainLayout->setSpacing(10);
     
     // Instruction label
-    m_instructionLabel = new QLabel("Click on the image to get coordinates. Points are numbered in order.", this);
+    m_instructionLabel = new QLabel("Left-click to add points • Right-click on a point to delete it", this);
     m_instructionLabel->setStyleSheet(R"(
         QLabel {
             color: #E0E0E0;
@@ -143,6 +165,7 @@ void CoordinatePicker::setupUI()
     m_imageLabel = new ClickableImageLabel();
     m_imageLabel->setPixmap(m_screenshot);
     connect(m_imageLabel, &ClickableImageLabel::pointClicked, this, &CoordinatePicker::onPointClicked);
+    connect(m_imageLabel, &ClickableImageLabel::pointRemoved, this, &CoordinatePicker::onPointRemoved);
     
     m_scrollArea->setWidget(m_imageLabel);
     mainLayout->addWidget(m_scrollArea, 1);
@@ -263,6 +286,24 @@ void CoordinatePicker::onPointClicked(const QPoint &point)
     m_copyLastButton->setEnabled(true);
     m_copyAllButton->setEnabled(true);
     m_clearButton->setEnabled(true);
+}
+
+void CoordinatePicker::onPointRemoved(int index)
+{
+    if (index >= 0 && index < m_points.size()) {
+        m_points.removeAt(index);
+    }
+    
+    updateCoordinateDisplay();
+    
+    bool hasPoints = !m_points.isEmpty();
+    m_copyLastButton->setEnabled(hasPoints);
+    m_copyAllButton->setEnabled(hasPoints);
+    m_clearButton->setEnabled(hasPoints);
+    
+    if (!hasPoints) {
+        m_coordLabel->setText("No points selected");
+    }
 }
 
 void CoordinatePicker::updateCoordinateDisplay()

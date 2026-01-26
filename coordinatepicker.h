@@ -20,6 +20,7 @@ public:
 
 signals:
     void pointClicked(const QPoint &point);
+    void pointRemoved(int index);
 
 protected:
     void mousePressEvent(QMouseEvent *event) override;
@@ -27,6 +28,8 @@ protected:
     void paintEvent(QPaintEvent *event) override;
 
 private:
+    int findPointAt(const QPoint &pos) const;
+    
     QPixmap m_originalPixmap;
     QVector<QPoint> m_points;
     QPoint m_currentPos;
@@ -42,6 +45,7 @@ public:
 
 private slots:
     void onPointClicked(const QPoint &point);
+    void onPointRemoved(int index);
     void copyLastCoordinate();
     void copyAllCoordinates();
     void clearPoints();

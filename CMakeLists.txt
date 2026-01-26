@@ -18,6 +18,8 @@ set(PROJECT_SOURCES
         mainwindow.h
         screenshotoverlay.cpp
         screenshotoverlay.h
+        coordinatepicker.cpp
+        coordinatepicker.h
 )
 
 # Windows application icon

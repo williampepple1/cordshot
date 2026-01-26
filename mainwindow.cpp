@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "screenshotoverlay.h"
+#include "coordinatepicker.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QFrame>
@@ -63,7 +64,7 @@ void MainWindow::setupUI()
 {
     // Window settings - compact widget style
     setWindowTitle("Cordshot");
-    setFixedSize(280, 380);
+    setFixedSize(280, 420);
     setWindowFlags(Qt::Window | Qt::WindowStaysOnTopHint);
     
     // Central widget
@@ -252,6 +253,30 @@ void MainWindow::setupUI()
     connect(m_openLocationButton, &QPushButton::clicked, this, &MainWindow::openScreenshotLocation);
     mainLayout->addWidget(m_openLocationButton);
     
+    // Coordinate picker button (hidden by default)
+    m_coordPickerButton = new QPushButton("📍 Get Coordinates", this);
+    m_coordPickerButton->setCursor(Qt::PointingHandCursor);
+    m_coordPickerButton->setVisible(false);
+    m_coordPickerButton->setStyleSheet(R"(
+        QPushButton {
+            background-color: #2A2A3C;
+            color: #FBBF24;
+            border: 1px solid #3A3A4C;
+            border-radius: 6px;
+            font-size: 10px;
+            padding: 8px 12px;
+        }
+        QPushButton:hover {
+            background-color: #3A3A4C;
+            color: #FCD34D;
+        }
+        QPushButton:pressed {
+            background-color: #1A1A2C;
+        }
+    )");
+    connect(m_coordPickerButton, &QPushButton::clicked, this, &MainWindow::openCoordinatePicker);
+    mainLayout->addWidget(m_coordPickerButton);
+    
     mainLayout->addStretch();
     
     // Window styling
@@ -423,6 +448,9 @@ void MainWindow::onScreenshotTaken(const QPixmap &screenshot, const QString &sav
             m_openLocationButton->setVisible(false);
         }
         
+        // Always show coordinate picker button when we have a screenshot
+        m_coordPickerButton->setVisible(true);
+        
         m_statusLabel->setText(statusText);
         m_statusLabel->setStyleSheet(R"(
             QLabel {
@@ -513,4 +541,17 @@ void MainWindow::closeEvent(QCloseEvent *event)
     } else {
         event->accept();
     }
+}
+
+void MainWindow::openCoordinatePicker()
+{
+    if (m_lastScreenshot.isNull()) {
+        QMessageBox::information(this, "No Screenshot", 
+            "Please capture a screenshot first.");
+        return;
+    }
+    
+    CoordinatePicker *picker = new CoordinatePicker(m_lastScreenshot, this);
+    picker->setAttribute(Qt::WA_DeleteOnClose);
+    picker->exec();
 }

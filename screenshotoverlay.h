@@ -35,6 +35,7 @@ private:
     bool m_hasFirstPoint;
     bool m_isDragging;
     QString m_savePath;
+    qreal m_devicePixelRatio;
 };
 
 #endif // SCREENSHOTOVERLAY_H

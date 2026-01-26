@@ -17,6 +17,7 @@ ScreenshotOverlay::ScreenshotOverlay(const QString &savePath, QWidget *parent)
     , m_hasFirstPoint(false)
     , m_isDragging(false)
     , m_savePath(savePath)
+    , m_devicePixelRatio(1.0)
 {
     setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::Tool);
     setAttribute(Qt::WA_TranslucentBackground, false);
@@ -35,10 +36,13 @@ void ScreenshotOverlay::captureScreen()
     // Get the virtual desktop geometry (all screens combined)
     QScreen *screen = QGuiApplication::primaryScreen();
     if (screen) {
-        // Capture the entire screen
+        // Store device pixel ratio for DPI scaling
+        m_devicePixelRatio = screen->devicePixelRatio();
+        
+        // Capture the entire screen (this captures at physical pixel resolution)
         m_backgroundPixmap = screen->grabWindow(0);
         
-        // Set geometry to cover the primary screen
+        // Set geometry to cover the primary screen (logical coordinates)
         setGeometry(screen->geometry());
     }
     
@@ -53,8 +57,9 @@ void ScreenshotOverlay::paintEvent(QPaintEvent *event)
     
     QPainter painter(this);
     
-    // Draw the captured screen
-    painter.drawPixmap(0, 0, m_backgroundPixmap);
+    // Draw the captured screen (scale from physical pixels to logical pixels)
+    // The pixmap is at physical resolution, but we draw at logical resolution
+    painter.drawPixmap(rect(), m_backgroundPixmap);
     
     // Draw semi-transparent dark overlay
     painter.fillRect(rect(), QColor(0, 0, 0, 100));
@@ -63,9 +68,17 @@ void ScreenshotOverlay::paintEvent(QPaintEvent *event)
     if (m_hasFirstPoint && m_isSelecting) {
         QRect selectionRect = QRect(m_firstPoint, m_secondPoint).normalized();
         
+        // Calculate the source rectangle in physical pixels
+        QRect sourceRect(
+            static_cast<int>(selectionRect.x() * m_devicePixelRatio),
+            static_cast<int>(selectionRect.y() * m_devicePixelRatio),
+            static_cast<int>(selectionRect.width() * m_devicePixelRatio),
+            static_cast<int>(selectionRect.height() * m_devicePixelRatio)
+        );
+        
         // Clear the selection area (show original screen)
         painter.setCompositionMode(QPainter::CompositionMode_Source);
-        painter.drawPixmap(selectionRect, m_backgroundPixmap, selectionRect);
+        painter.drawPixmap(selectionRect, m_backgroundPixmap, sourceRect);
         
         // Draw selection border
         painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
@@ -85,8 +98,10 @@ void ScreenshotOverlay::paintEvent(QPaintEvent *event)
         painter.drawRect(selectionRect.left() - handleSize/2, selectionRect.bottom() - handleSize/2, handleSize, handleSize);
         painter.drawRect(selectionRect.right() - handleSize/2, selectionRect.bottom() - handleSize/2, handleSize, handleSize);
         
-        // Draw dimensions
-        QString dimensions = QString("%1 × %2").arg(selectionRect.width()).arg(selectionRect.height());
+        // Draw dimensions (show actual physical pixel dimensions)
+        int actualWidth = static_cast<int>(selectionRect.width() * m_devicePixelRatio);
+        int actualHeight = static_cast<int>(selectionRect.height() * m_devicePixelRatio);
+        QString dimensions = QString("%1 × %2").arg(actualWidth).arg(actualHeight);
         QFont font = painter.font();
         font.setPointSize(10);
         font.setBold(true);
@@ -206,8 +221,16 @@ void ScreenshotOverlay::takeScreenshot()
         return;
     }
     
+    // Scale selection to physical pixels (the pixmap is at physical resolution)
+    QRect physicalSelection(
+        static_cast<int>(selection.x() * m_devicePixelRatio),
+        static_cast<int>(selection.y() * m_devicePixelRatio),
+        static_cast<int>(selection.width() * m_devicePixelRatio),
+        static_cast<int>(selection.height() * m_devicePixelRatio)
+    );
+    
     // Extract the selected region from the captured screen
-    QPixmap screenshot = m_backgroundPixmap.copy(selection);
+    QPixmap screenshot = m_backgroundPixmap.copy(physicalSelection);
     
     // Copy to clipboard
     QGuiApplication::clipboard()->setPixmap(screenshot);

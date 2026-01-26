@@ -29,6 +29,7 @@ private slots:
     void onScreenshotCancelled();
     void trayIconActivated(QSystemTrayIcon::ActivationReason reason);
     void selectSaveFolder();
+    void openScreenshotLocation();
 
 private:
     void setupUI();
@@ -39,6 +40,7 @@ private:
 
     QPushButton *m_captureButton;
     QPushButton *m_folderButton;
+    QPushButton *m_openLocationButton;
     QLabel *m_statusLabel;
     QLabel *m_previewLabel;
     QLabel *m_savePathLabel;
@@ -46,6 +48,7 @@ private:
     QSystemTrayIcon *m_trayIcon;
     QPixmap m_lastScreenshot;
     QString m_savePath;
+    QString m_lastSavedPath;
     QSettings *m_settings;
 };
 

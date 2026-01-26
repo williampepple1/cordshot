@@ -14,6 +14,9 @@
 #include <QFileDialog>
 #include <QStandardPaths>
 #include <QDir>
+#include <QDesktopServices>
+#include <QUrl>
+#include <QProcess>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -225,6 +228,30 @@ void MainWindow::setupUI()
     )");
     mainLayout->addWidget(m_statusLabel);
     
+    // Open screenshot button (hidden by default)
+    m_openLocationButton = new QPushButton("🖼️ Open Screenshot", this);
+    m_openLocationButton->setCursor(Qt::PointingHandCursor);
+    m_openLocationButton->setVisible(false);
+    m_openLocationButton->setStyleSheet(R"(
+        QPushButton {
+            background-color: #2A2A3C;
+            color: #60A5FA;
+            border: 1px solid #3A3A4C;
+            border-radius: 6px;
+            font-size: 10px;
+            padding: 8px 12px;
+        }
+        QPushButton:hover {
+            background-color: #3A3A4C;
+            color: #93C5FD;
+        }
+        QPushButton:pressed {
+            background-color: #1A1A2C;
+        }
+    )");
+    connect(m_openLocationButton, &QPushButton::clicked, this, &MainWindow::openScreenshotLocation);
+    mainLayout->addWidget(m_openLocationButton);
+    
     mainLayout->addStretch();
     
     // Window styling
@@ -370,6 +397,7 @@ void MainWindow::startScreenshot()
 void MainWindow::onScreenshotTaken(const QPixmap &screenshot, const QString &savedPath)
 {
     m_lastScreenshot = screenshot;
+    m_lastSavedPath = savedPath;
     
     // Update preview
     if (!screenshot.isNull()) {
@@ -383,10 +411,16 @@ void MainWindow::onScreenshotTaken(const QPixmap &screenshot, const QString &sav
             // Extract just the filename
             QString filename = QFileInfo(savedPath).fileName();
             statusText = QString("✓ Saved: %1\nCopied to clipboard").arg(filename);
+            
+            // Show the open location button
+            m_openLocationButton->setVisible(true);
         } else {
             statusText = QString("✓ Captured %1×%2 • Clipboard only")
                         .arg(screenshot.width())
                         .arg(screenshot.height());
+            
+            // Hide the open location button if not saved to file
+            m_openLocationButton->setVisible(false);
         }
         
         m_statusLabel->setText(statusText);
@@ -408,6 +442,24 @@ void MainWindow::onScreenshotTaken(const QPixmap &screenshot, const QString &sav
     // Show window again
     show();
     activateWindow();
+}
+
+void MainWindow::openScreenshotLocation()
+{
+    if (m_lastSavedPath.isEmpty()) {
+        return;
+    }
+    
+    QFileInfo fileInfo(m_lastSavedPath);
+    if (!fileInfo.exists()) {
+        QMessageBox::warning(this, "File Not Found", 
+            "The screenshot file no longer exists:\n" + m_lastSavedPath);
+        m_openLocationButton->setVisible(false);
+        return;
+    }
+    
+    // Open the file directly with the default application (image viewer)
+    QDesktopServices::openUrl(QUrl::fromLocalFile(m_lastSavedPath));
 }
 
 void MainWindow::onScreenshotCancelled()

@@ -36,14 +36,23 @@ void ScreenshotOverlay::captureScreen()
     // Get the virtual desktop geometry (all screens combined)
     QScreen *screen = QGuiApplication::primaryScreen();
     if (screen) {
-        // Store device pixel ratio for DPI scaling
-        m_devicePixelRatio = screen->devicePixelRatio();
-        
-        // Capture the entire screen (this captures at physical pixel resolution)
+        // Capture the entire screen
         m_backgroundPixmap = screen->grabWindow(0);
         
         // Set geometry to cover the primary screen (logical coordinates)
-        setGeometry(screen->geometry());
+        QRect screenGeometry = screen->geometry();
+        setGeometry(screenGeometry);
+        
+        // Calculate actual scale factor by comparing pixmap size to screen size
+        // This handles DPI scaling correctly across all platforms
+        qreal scaleX = static_cast<qreal>(m_backgroundPixmap.width()) / screenGeometry.width();
+        qreal scaleY = static_cast<qreal>(m_backgroundPixmap.height()) / screenGeometry.height();
+        m_devicePixelRatio = qMax(scaleX, scaleY);
+        
+        // If ratio is very close to 1.0, just use 1.0 to avoid floating point issues
+        if (qAbs(m_devicePixelRatio - 1.0) < 0.01) {
+            m_devicePixelRatio = 1.0;
+        }
     }
     
     showFullScreen();

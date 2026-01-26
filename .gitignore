@@ -10,4 +10,3 @@ CMakeLists.txt.user
 # Compiled installers (distribute separately, not in repo)
 # *.exe
 # *.zip
-installer.iss

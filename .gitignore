@@ -8,6 +8,6 @@ installer_output/
 CMakeLists.txt.user
 
 # Compiled installers (distribute separately, not in repo)
-*.exe
-*.zip
+# *.exe
+# *.zip
 installer.iss

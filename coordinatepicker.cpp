@@ -6,6 +6,7 @@
 #include <QClipboard>
 #include <QGuiApplication>
 #include <QMessageBox>
+#include <QScreen>
 
 // ClickableImageLabel implementation
 ClickableImageLabel::ClickableImageLabel(QWidget *parent)
@@ -17,9 +18,15 @@ ClickableImageLabel::ClickableImageLabel(QWidget *parent)
 
 void ClickableImageLabel::setPixmap(const QPixmap &pixmap)
 {
-    m_originalPixmap = pixmap;
-    QLabel::setPixmap(pixmap);
-    setFixedSize(pixmap.size());
+    // Scale to 1920x1080 for consistent coordinate reference
+    // This ensures coordinates are always relative to a standard size
+    QPixmap scaledPixmap = pixmap.scaled(1920, 1080, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+    scaledPixmap.setDevicePixelRatio(1.0);
+    
+    m_originalPixmap = scaledPixmap;
+    
+    QLabel::setPixmap(m_originalPixmap);
+    setFixedSize(m_originalPixmap.size());
 }
 
 void ClickableImageLabel::clearPoints()
@@ -268,9 +275,18 @@ void CoordinatePicker::setupUI()
         }
     )");
     
-    // Size the dialog based on screenshot size
-    int dialogWidth = qMin(m_screenshot.width() + 40, 1200);
-    int dialogHeight = qMin(m_screenshot.height() + 180, 800);
+    // Size the dialog to fit within the screen
+    QScreen *screen = QGuiApplication::primaryScreen();
+    QRect screenGeometry = screen->availableGeometry();
+    
+    // Leave some margin from screen edges (50px on each side)
+    int maxWidth = screenGeometry.width() - 100;
+    int maxHeight = screenGeometry.height() - 100;
+    
+    // Dialog size: image + UI elements, but capped to screen size
+    int dialogWidth = qMin(1920 + 40, maxWidth);
+    int dialogHeight = qMin(1080 + 180, maxHeight);
+    
     resize(dialogWidth, dialogHeight);
 }
 
